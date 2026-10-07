@@ -1,0 +1,18 @@
+==========================================
+ Lancement du scan Nmap sur : 192.168.1.1
+ Type de scan : fast
+ Date : Wed Oct  7 03:29:52 PM EDT 2026
+==========================================
+Starting Nmap 7.94SVN ( https://nmap.org ) at 2026-10-07 15:29 EDT
+Nmap scan report for 192.168.1.1
+Host is up (0.024s latency).
+Not shown: 97 filtered tcp ports (no-response)
+PORT    STATE SERVICE    VERSION
+53/tcp  open  tcpwrapped
+80/tcp  open  tcpwrapped
+443/tcp open  tcpwrapped
+
+Service detection performed. Please report any incorrect results at https://nmap.org/submit/ .
+Nmap done: 1 IP address (1 host up) scanned in 17.58 seconds
+
+Scan terminé. Rapport enregistré dans : ../../backups/scan_192.168.1.1_{TIMESTAMP}.txt
