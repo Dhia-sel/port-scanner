@@ -12,7 +12,7 @@ BACKUP_DIR="../../backups"
 
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 CLEAN_TARGET=$(echo "$TARGET"  | sed 's/[^a-zA-Z0-9._-]/_/g')
-REPORT_FILE="$BACKUP_DIR/scan_${CLEAN_TARGET}_{TIMESTAMP}.txt"
+REPORT_FILE="$BACKUP_DIR/scan_${CLEAN_TARGET}_${TIMESTAMP}.txt"
 
 
 echo "==========================================" | tee "$REPORT_FILE"
