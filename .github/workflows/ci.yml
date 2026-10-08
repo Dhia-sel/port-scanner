@@ -1,0 +1,48 @@
+name: CI Nexus Scanner
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout du code source
+        uses: actions/checkout@v4
+
+      - name: Création des dossiers requis
+        run: mkdir -p backups archives logs
+
+      - name: Vérification des scripts Bash (ShellCheck)
+        uses: ludeeus/action-shellcheck@master
+        with:
+          scandir: './scripts'
+
+      - name: Configuration de Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Test de syntaxe Python (Flake8)
+        run: |
+          pip install flake8
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+
+      - name: Build et Lancement Docker Compose
+        run: docker compose up -d --build
+
+      - name: Test d'intégration (Healthcheck API)
+        run: |
+          echo "Attente de l'initialisation des services..."
+          sleep 5
+          # Test de la réponse 200 OK
+          curl --fail -s http://localhost/api/health > /dev/null
+          echo "Test réussi ! L'API répond."
+
+      - name: Arrêt et nettoyage
+        if: always()
+        run: docker compose down

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  api:
+    build: 
+      context: .
+      dockerfile: app/Dockerfile
+    container_name: nexus_api
+    restart: unless-stopped
+    volumes:
+      - ./backups:/backups
+  nginx:
+    image: nginx:alpine
+    container_name: nexus_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./app/templates:/usr/share/nginx/html:ro
+    depends_on:
+      - api
