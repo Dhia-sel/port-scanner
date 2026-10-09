@@ -3,257 +3,998 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PScanner</title>
+    <title>PScanner - Dashboard</title>
     <style>
         :root {
-            --bg-color: #0a0a0c;
-            --neon-green: #00ff41;
-            --dark-green: #008f11;
-            --alert-red: #ff003c;
-            --panel-bg: #111116;
+            --ink: #060a13;
+            --panel: #0c1322;
+            --panel-2: #101a2e;
+            --line: #1b2a45;
+            --line-strong: #27406b;
+            --text: #d4e2f6;
+            --muted: #7388a6;
+            --cyan: #22d3ee;
+            --cyan-dim: rgba(34, 211, 238, 0.14);
+            --amber: #fbbf24;
+            --red: #ff4d6d;
+            --red-dim: rgba(255, 77, 109, 0.1);
+            --mono: ui-monospace, "JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+            --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
+        * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
+
         body {
-            background-color: var(--bg-color);
-            color: var(--neon-green);
-            font-family: 'Courier New', Courier, monospace;
             margin: 0;
-            padding: 2rem;
+            min-height: 100vh;
+            background-color: var(--ink);
+            color: var(--text);
+            font-family: var(--sans);
+            line-height: 1.5;
+            padding: 32px 20px 48px;
+            display: flex;
+            justify-content: center;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            background-image:
+                linear-gradient(rgba(34, 211, 238, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34, 211, 238, 0.06) 1px, transparent 1px);
+            background-size: 44px 44px;
+            -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 0%, transparent 80%);
+            mask-image: radial-gradient(ellipse 90% 70% at 50% 0%, #000 0%, transparent 80%);
+        }
+
+        .shell { position: relative; width: 100%; max-width: 1040px; }
+
+        /* ---------- En-tête ---------- */
+        header { display: flex; align-items: center; gap: 14px; margin-bottom: 24px; }
+
+        .logo {
+            color: var(--cyan);
+            flex: none;
+            filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.45));
+        }
+
+        h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; }
+        h1 span { color: var(--muted); font-weight: 400; margin-left: 6px; }
+        .tagline { margin: 2px 0 0; color: var(--muted); font-size: 14px; }
+
+        /* ---------- Panneaux ---------- */
+        .panel {
+            background: var(--panel);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 22px;
+        }
+
+        .panel-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .panel-title { margin: 0; font-size: 15px; font-weight: 600; }
+        .panel-meta { font-size: 13px; color: var(--muted); min-width: 0; overflow-wrap: anywhere; }
+        .panel-meta code { font-family: var(--mono); color: var(--cyan); }
+
+        /* ---------- Hero : formulaire + radar ---------- */
+        .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+            gap: 18px;
+            margin-bottom: 18px;
+        }
+
+        .scan-form { display: grid; gap: 18px; }
+
+        .row { display: flex; gap: 10px; align-items: flex-end; }
+
+        .field { flex: 1; min-width: 0; display: block; }
+
+        .field-label, legend {
+            display: block;
+            padding: 0;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        .prompt-wrap {
+            display: flex;
+            align-items: center;
+            background: var(--ink);
+            border: 1px solid var(--line-strong);
+            border-radius: 6px;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .prompt-wrap:focus-within { border-color: var(--cyan); box-shadow: 0 0 0 3px var(--cyan-dim); }
+
+        .prompt { padding-left: 14px; color: var(--cyan); font-family: var(--mono); font-weight: 700; user-select: none; }
+
+        input[type="text"] {
+            flex: 1;
+            min-width: 0;
+            background: transparent;
+            border: 0;
+            outline: none;
+            color: var(--text);
+            font-family: var(--mono);
+            font-size: 15px;
+            padding: 12px 14px 12px 10px;
+        }
+
+        input[type="text"]::placeholder { color: #4a5d7a; }
+
+        .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -6px; }
+        .chips-label { font-size: 12px; color: var(--muted); }
+
+        .chip {
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            color: var(--text);
+            border-radius: 999px;
+            padding: 3px 12px;
+            font-family: var(--mono);
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+        .chip:hover { border-color: var(--cyan); color: var(--cyan); }
+        .chip:focus-visible, .history-item:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        fieldset.types { border: 0; padding: 0; margin: 0; min-width: 0; }
+
+        .type-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+
+        .type { display: block; position: relative; cursor: pointer; }
+
+        .type input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+
+        .type-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            height: 100%;
+            padding: 11px 14px;
+            background: var(--ink);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            transition: border-color 0.15s, background 0.15s;
+        }
+
+        .type-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+        .type-top strong { font-size: 14px; font-weight: 600; }
+        .type-top code { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+        .type-hint { font-size: 12px; color: var(--muted); line-height: 1.35; }
+
+        .type:hover .type-body { border-color: var(--line-strong); }
+        .type input:checked + .type-body { border-color: var(--cyan); background: var(--cyan-dim); }
+        .type input:checked + .type-body .type-top code { color: var(--cyan); }
+        .type input:focus-visible + .type-body { outline: 2px solid var(--cyan); outline-offset: 2px; }
+
+        .btn-primary {
+            flex: none;
+            background: var(--cyan);
+            color: #031018;
+            border: 0;
+            border-radius: 6px;
+            padding: 13px 22px;
+            font-family: var(--sans);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.15s, box-shadow 0.15s, opacity 0.15s;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: #67e8f9;
+            box-shadow: 0 0 0 3px var(--cyan-dim), 0 0 22px rgba(34, 211, 238, 0.35);
+        }
+
+        .btn-primary:focus-visible, .ghost:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .btn-primary:disabled { cursor: not-allowed; opacity: 0.5; }
+
+        /* ---------- Radar (toujours visible) ---------- */
+        .radar-panel {
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
+            gap: 18px;
+            text-align: center;
         }
 
-        h1 {
-            text-shadow: 0 0 10px var(--neon-green);
-            text-transform: uppercase;
-            letter-spacing: 4px;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 900px;
-            background: var(--panel-bg);
-            border: 1px solid var(--dark-green);
-            padding: 2rem;
-            box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
-        }
-
-        .form-group {
-            display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        input, select, button {
-            background: transparent;
-            border: 1px solid var(--dark-green);
-            color: var(--neon-green);
-            padding: 10px 15px;
-            font-family: inherit;
-            font-size: 1rem;
-            outline: none;
-        }
-
-        input {
-            flex: 1;
-        }
-
-        input:focus, select:focus {
-            border-color: var(--neon-green);
-            box-shadow: 0 0 8px var(--dark-green);
-        }
-
-        button {
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        button:hover {
-            background: var(--neon-green);
-            color: var(--bg-color);
-            box-shadow: 0 0 15px var(--neon-green);
-        }
-
-        /* Loading Animation */
-        .scanner-loader {
-            display: none;
-            width: 100%;
-            height: 4px;
-            background: var(--dark-green);
+        .radar {
+            --size: 200px;
             position: relative;
+            width: var(--size);
+            height: var(--size);
+            flex: none;
+            border-radius: 50%;
+            border: 1px solid var(--line-strong);
             overflow: hidden;
-            margin-bottom: 1rem;
+            background:
+                linear-gradient(var(--line-strong), var(--line-strong)) center / 1px 100% no-repeat,
+                linear-gradient(var(--line-strong), var(--line-strong)) center / 100% 1px no-repeat,
+                repeating-radial-gradient(circle at center, transparent 0 19px, rgba(34, 211, 238, 0.2) 19px 20px);
         }
 
-        .scanner-loader::after {
-            content: '';
+        .radar::before {
+            content: "";
             position: absolute;
-            width: 20%;
-            height: 100%;
-            background: var(--neon-green);
-            box-shadow: 0 0 10px var(--neon-green);
-            animation: scan 1.5s infinite linear;
+            left: 50%;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            margin: -3px 0 0 -3px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+            z-index: 1;
         }
 
-        @keyframes scan {
-            0% { left: -20%; }
-            100% { left: 100%; }
+        .radar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, rgba(34, 211, 238, 0) 0deg, rgba(34, 211, 238, 0) 280deg, rgba(34, 211, 238, 0.3) 360deg);
+            animation: sweep 7s linear infinite;
         }
 
-        /* Results section */
-        #results-container {
-            display: none;
+        [data-state="scanning"] .radar::after {
+            background: conic-gradient(from 0deg, rgba(34, 211, 238, 0) 0deg, rgba(34, 211, 238, 0) 260deg, rgba(34, 211, 238, 0.65) 360deg);
+            animation-duration: 1.6s;
         }
 
-        .summary {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 1.5rem;
+        @keyframes sweep { to { transform: rotate(360deg); } }
+
+        .blip {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            margin: -4px 0 0 -4px;
+            border-radius: 50%;
+            background: var(--cyan);
+            box-shadow: 0 0 10px var(--cyan);
+            z-index: 2;
+            animation: blip 0.5s ease-out both;
         }
+
+        @keyframes blip { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+        #status-text {
+            display: block;
+            font-family: var(--mono);
+            font-size: 14px;
+            color: var(--muted);
+            overflow-wrap: anywhere;
+        }
+
+        [data-state="scanning"] #status-text { color: var(--amber); }
+        [data-state="done"] #status-text { color: var(--cyan); }
+
+        #elapsed {
+            display: block;
+            min-height: 20px;
+            margin-top: 2px;
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* ---------- Erreur ---------- */
+        .banner-error {
+            background: var(--red-dim);
+            border: 1px solid rgba(255, 77, 109, 0.45);
+            border-left-width: 3px;
+            color: #ffc2cd;
+            border-radius: 6px;
+            padding: 12px 16px;
+            margin-bottom: 18px;
+            font-family: var(--mono);
+            font-size: 13px;
+            overflow-wrap: anywhere;
+        }
+
+        /* ---------- Bandeau de stats ---------- */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 1px;
+            background: var(--line);
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 18px;
+        }
+
+        .stat { display: flex; flex-direction: column; padding: 16px 20px; background: var(--panel); }
+        .stat-label { font-size: 13px; color: var(--muted); }
+        .stat-value { font-family: var(--mono); font-size: 26px; font-weight: 700; line-height: 1.25; }
+        .stat-value.is-alert { color: var(--red); }
+        .stat-value.is-ok { color: var(--cyan); }
+
+        /* ---------- Grille principale ---------- */
+        .main {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) 300px;
+            gap: 18px;
+            align-items: start;
+        }
+
+        .col { display: grid; gap: 18px; min-width: 0; }
+
+        #summary { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px; }
 
         .badge {
-            border: 1px solid var(--neon-green);
-            padding: 5px 10px;
-            background: rgba(0, 255, 65, 0.1);
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            min-width: 0;
+            padding: 10px 12px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            border-left: 2px solid var(--cyan);
+            border-radius: 4px;
+            font-family: var(--mono);
+            font-size: 13px;
         }
+
+        .badge .port { color: var(--cyan); font-weight: 700; font-size: 15px; }
+        .badge .proto { color: var(--muted); }
+        .badge .svc { margin-left: auto; text-align: right; overflow-wrap: anywhere; }
 
         .badge.vuln {
-            border-color: var(--alert-red);
-            color: var(--alert-red);
-            background: rgba(255, 0, 60, 0.1);
+            grid-column: 1 / -1;
+            background: var(--red-dim);
+            border-color: rgba(255, 77, 109, 0.3);
+            border-left-color: var(--red);
+            color: #ffc2cd;
+            align-items: flex-start;
         }
 
-        .terminal {
-            background: #000;
-            border: 1px solid #333;
-            padding: 15px;
-            overflow-x: auto;
+        .badge.vuln .tag { flex: none; color: var(--red); font-weight: 700; }
+        .badge.vuln .msg { overflow-wrap: anywhere; }
+
+        .empty { grid-column: 1 / -1; color: var(--muted); font-size: 13px; padding: 6px 0; }
+
+        /* ---------- Terminal ---------- */
+        .terminal { background: #04070d; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
+
+        .terminal-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 8px 8px 16px;
+            border-bottom: 1px solid var(--line);
+            font-family: var(--mono);
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        .ghost {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--line-strong);
+            border-radius: 5px;
+            padding: 5px 12px;
+            font-family: var(--sans);
+            font-size: 12px;
+            cursor: pointer;
+            transition: border-color 0.15s, color 0.15s;
+        }
+
+        .ghost:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+        .ghost:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        pre#raw-output {
+            margin: 0;
+            padding: 16px;
+            min-height: 220px;
+            max-height: 520px;
+            overflow: auto;
+            color: #8da2c0;
+            font-family: var(--mono);
+            font-size: 13px;
+            line-height: 1.55;
             white-space: pre-wrap;
-            font-size: 0.9rem;
-            line-height: 1.4;
-            position: relative;
+            overflow-wrap: anywhere;
+        }
+
+        .l-open { color: var(--cyan); }
+        .l-vuln { color: var(--red); }
+        .l-info { color: var(--text); }
+        .l-dim  { color: #4a5d7a; }
+
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 15px;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            background: var(--cyan);
+            animation: blink 1.1s steps(1) infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        /* ---------- Historique ---------- */
+        .history-list { display: grid; gap: 8px; }
+
+        .history-item {
+            display: grid;
+            gap: 4px;
+            width: 100%;
+            text-align: left;
+            padding: 10px 12px;
+            background: var(--panel-2);
+            border: 1px solid var(--line);
+            border-radius: 6px;
+            color: var(--text);
+            font-family: var(--sans);
+            cursor: pointer;
+            transition: border-color 0.15s;
+        }
+
+        .history-item:hover { border-color: var(--cyan); }
+
+        .history-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+
+        .history-target {
+            font-family: var(--mono);
+            font-size: 13px;
+            color: var(--cyan);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            min-width: 0;
+        }
+
+        .history-type { font-family: var(--mono); font-size: 11px; color: var(--muted); flex: none; }
+
+        .history-bottom { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 12px; color: var(--muted); }
+        .history-bottom .alert { color: var(--red); }
+
+        .link-btn {
+            background: none;
+            border: 0;
+            padding: 0;
+            color: var(--muted);
+            font-size: 12px;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .link-btn:hover { color: var(--text); }
+
+        .notice { margin: 22px 0 0; font-size: 12px; color: var(--muted); }
+
+        /* ---------- Responsive ---------- */
+        @media (max-width: 860px) {
+            .hero, .main { grid-template-columns: minmax(0, 1fr); }
+            .stats-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+
+        @media (max-width: 600px) {
+            body { padding: 20px 14px 36px; }
+            .panel { padding: 16px; }
+            .row { flex-direction: column; align-items: stretch; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .radar::after, .blip, .cursor { animation: none; }
+            * { transition: none !important; }
         }
     </style>
 </head>
 <body>
 
-    <h1>Nexus // Scanner</h1>
+<div class="shell">
+    <header>
+        <svg class="logo" viewBox="0 0 32 32" width="36" height="36" aria-hidden="true">
+            <circle cx="16" cy="16" r="11" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <circle cx="16" cy="16" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/>
+            <path d="M16 2v8M16 22v8M2 16h8M22 16h8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <div>
+            <h1>PScanner<span>Dashboard</span></h1>
+            <p class="tagline">Scanner de ports et de vulnérabilités basé sur Nmap</p>
+        </div>
+    </header>
 
-    <div class="container">
-        <form id="scan-form" class="form-group">
-            <input type="text" id="target" placeholder="IP ou Domaine (ex: 192.168.1.1)" required>
-            <select id="scan-type">
-                <option value="quick">Fast Scan (-F)</option>
-                <option value="full">Full Scan (-p-)</option>
-                <option value="vuln">Vuln Scan (--script vuln)</option>
-            </select>
-            <button type="submit" id="btn-scan">Initier Scan</button>
-        </form>
+    <!-- Formulaire + radar -->
+    <div class="hero">
+        <section class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Nouveau scan</h2>
+            </div>
 
-        <div id="loader" class="scanner-loader"></div>
-        <div id="status-text" style="margin-bottom: 1rem; font-style: italic;"></div>
+            <form id="scan-form" class="scan-form" autocomplete="off">
+                <div class="row">
+                    <label class="field" for="target">
+                        <span class="field-label">Cible</span>
+                        <span class="prompt-wrap">
+                            <span class="prompt" aria-hidden="true">$</span>
+                            <input type="text" id="target" placeholder="127.0.0.1 ou scanme.nmap.org" spellcheck="false" autocapitalize="off" required>
+                        </span>
+                    </label>
+                    <button type="submit" id="btn-scan" class="btn-primary">Lancer le scan</button>
+                </div>
 
-        <div id="results-container">
-            <h3>>> ANALYSE_RÉSULTATS</h3>
-            <div id="summary" class="summary"></div>
-            
-            <h3>>> RAW_OUTPUT</h3>
-            <div class="terminal" id="raw-output"></div>
+                <div class="chips">
+                    <span class="chips-label">Raccourcis</span>
+                    <button type="button" class="chip" data-target="127.0.0.1">127.0.0.1</button>
+                    <button type="button" class="chip" data-target="scanme.nmap.org">scanme.nmap.org</button>
+                </div>
+
+                <fieldset class="types">
+                    <legend>Type de scan</legend>
+                    <div class="type-grid">
+                        <label class="type">
+                            <input type="radio" name="scan-type" value="fast" checked>
+                            <span class="type-body">
+                                <span class="type-top"><strong>Scan rapide</strong><code>fast</code></span>
+                                <span class="type-hint">Les ports courants, résultat rapide</span>
+                            </span>
+                        </label>
+                        <label class="type">
+                            <input type="radio" name="scan-type" value="full">
+                            <span class="type-body">
+                                <span class="type-top"><strong>Scan complet</strong><code>full</code></span>
+                                <span class="type-hint">Analyse approfondie, plus long</span>
+                            </span>
+                        </label>
+                        <label class="type">
+                            <input type="radio" name="scan-type" value="vuln">
+                            <span class="type-body">
+                                <span class="type-top"><strong>Vulnérabilités</strong><code>vuln</code></span>
+                                <span class="type-hint">Recherche de failles connues (CVE)</span>
+                            </span>
+                        </label>
+                    </div>
+                </fieldset>
+            </form>
+        </section>
+
+        <section class="panel radar-panel" id="radar-panel" data-state="idle" role="status" aria-live="polite">
+            <div class="radar" id="radar" aria-hidden="true"></div>
+            <div id="loader">
+                <span id="status-text">En attente d'une cible</span>
+                <span id="elapsed"></span>
+            </div>
+        </section>
+    </div>
+
+    <!-- Erreur -->
+    <div id="error-banner" class="banner-error" role="alert" hidden></div>
+
+    <!-- Bandeau de stats -->
+    <div class="stats-strip" id="stats-strip">
+        <div class="stat">
+            <span class="stat-label">Ports ouverts</span>
+            <span class="stat-value" id="stat-ports">-</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Vulnérabilités</span>
+            <span class="stat-value" id="stat-vulns">-</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Durée du scan</span>
+            <span class="stat-value" id="stat-time">-</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Scans récents</span>
+            <span class="stat-value" id="stat-history">0</span>
         </div>
     </div>
 
-    <script>
-        document.getElementById('scan-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            
-            const target = document.getElementById('target').value;
-            const scanType = document.getElementById('scan-type').value;
-            const loader = document.getElementById('loader');
-            const statusText = document.getElementById('status-text');
-            const resultsContainer = document.getElementById('results-container');
-            const btnScan = document.getElementById('btn-scan');
+    <div class="main" id="results-container">
+        <div class="col">
+            <!-- Résumé analysé -->
+            <section class="panel">
+                <div class="panel-head">
+                    <h2 class="panel-title">Analyse des résultats</h2>
+                    <span class="panel-meta" id="result-meta">Aucun scan pour l'instant</span>
+                </div>
+                <div id="summary"></div>
+            </section>
 
-            // Reset UI
-            loader.style.display = 'block';
-            resultsContainer.style.display = 'none';
-            document.getElementById('summary').innerHTML = '';
-            document.getElementById('raw-output').textContent = '';
-            btnScan.disabled = true;
-            btnScan.style.opacity = '0.5';
-            statusText.textContent = `[+] Scanning ${target} en cours... Veuillez patienter.`;
+            <!-- Sortie brute Nmap -->
+            <section class="terminal">
+                <div class="terminal-bar">
+                    <span>Console / sortie brute Nmap</span>
+                    <button type="button" id="btn-copy" class="ghost" disabled>Copier</button>
+                </div>
+                <pre id="raw-output"></pre>
+            </section>
+        </div>
 
-            try {
-                // Appel à l'API Flask
-                const response = await fetch('/api/scan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ target: target, scan_type: scanType })
-                });
+        <!-- Historique -->
+        <aside class="panel">
+            <div class="panel-head">
+                <h2 class="panel-title">Historique</h2>
+                <button type="button" id="btn-clear" class="link-btn" hidden>Effacer</button>
+            </div>
+            <div id="history-list" class="history-list"></div>
+        </aside>
+    </div>
 
-                const data = await response.json();
+    <p class="notice">Ne scannez que des cibles que vous êtes autorisé à tester.</p>
+</div>
 
-                if (!response.ok) {
-                    throw new Error(data.error || 'Erreur serveur inconnue');
-                }
+<script>
+    const form = document.getElementById('scan-form');
+    const targetInput = document.getElementById('target');
+    const radarPanel = document.getElementById('radar-panel');
+    const radar = document.getElementById('radar');
+    const statusText = document.getElementById('status-text');
+    const elapsedElem = document.getElementById('elapsed');
+    const btnScan = document.getElementById('btn-scan');
+    const btnCopy = document.getElementById('btn-copy');
+    const btnClear = document.getElementById('btn-clear');
+    const rawOutputElem = document.getElementById('raw-output');
+    const summaryDiv = document.getElementById('summary');
+    const errorBanner = document.getElementById('error-banner');
+    const resultMeta = document.getElementById('result-meta');
+    const statPorts = document.getElementById('stat-ports');
+    const statVulns = document.getElementById('stat-vulns');
+    const statTime = document.getElementById('stat-time');
+    const statHistory = document.getElementById('stat-history');
+    const historyList = document.getElementById('history-list');
+    const statsStrip = document.getElementById('stats-strip');
 
-                // Affichage du texte brut
-                document.getElementById('raw-output').textContent = data.result;
-                
-                // Parsing intelligent via JS
-                parseResults(data.result, scanType);
-                
-                resultsContainer.style.display = 'block';
-                statusText.textContent = `[+] Scan terminé avec succès.`;
-            } catch (error) {
-                statusText.textContent = `[!] ERREUR: ${error.message}`;
-                statusText.style.color = 'var(--alert-red)';
-            } finally {
-                loader.style.display = 'none';
-                btnScan.disabled = false;
-                btnScan.style.opacity = '1';
+    const HISTORY_KEY = 'pscanner:history';
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    let timerId = null;
+    let lastRaw = '';
+
+    /* ---------- États de l'interface ---------- */
+
+    function setState(state, title, detail) {
+        radarPanel.dataset.state = state;
+        statusText.textContent = title;
+        elapsedElem.textContent = detail || '';
+    }
+
+    function showIdleSummary() {
+        summaryDiv.innerHTML = '';
+        const empty = document.createElement('span');
+        empty.className = 'empty';
+        empty.textContent = 'Lancez un scan : les ports ouverts et les vulnérabilités apparaîtront ici.';
+        summaryDiv.appendChild(empty);
+    }
+
+    function showIdleTerminal() {
+        rawOutputElem.replaceChildren(
+            document.createTextNode('[~] En attente d\'une cible...\n'),
+            Object.assign(document.createElement('span'), { className: 'cursor' })
+        );
+        btnCopy.disabled = true;
+        lastRaw = '';
+    }
+
+    function showError(message) {
+        errorBanner.textContent = `[-] Erreur de scan : ${message}`;
+        errorBanner.hidden = false;
+    }
+
+    function startTimer() {
+        const t0 = performance.now();
+        elapsedElem.textContent = '0.0 s';
+        timerId = setInterval(() => {
+            elapsedElem.textContent = ((performance.now() - t0) / 1000).toFixed(1) + ' s';
+        }, 100);
+    }
+
+    function stopTimer() {
+        clearInterval(timerId);
+        timerId = null;
+    }
+
+    /* ---------- Radar : un point par port ouvert ---------- */
+
+    function clearBlips() {
+        radar.querySelectorAll('.blip').forEach(b => b.remove());
+    }
+
+    function addBlips(ports) {
+        ports.slice(0, 24).forEach(({ port, proto }) => {
+            const n = parseInt(port, 10) || 0;
+            const angle = ((n * 137.508) % 360) * Math.PI / 180;
+            const dist = 16 + ((n * 53) % 30);
+            const blip = document.createElement('span');
+            blip.className = 'blip';
+            blip.style.left = (50 + dist * Math.cos(angle)) + '%';
+            blip.style.top = (50 + dist * Math.sin(angle)) + '%';
+            blip.title = `${port}/${proto}`;
+            radar.appendChild(blip);
+        });
+    }
+
+    /* ---------- Historique (stocké dans le navigateur) ---------- */
+
+    function loadHistory() {
+        try {
+            const list = JSON.parse(localStorage.getItem(HISTORY_KEY));
+            return Array.isArray(list) ? list : [];
+        } catch { return []; }
+    }
+
+    function saveHistory(list) {
+        try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); } catch { /* stockage indisponible */ }
+    }
+
+    function addHistory(entry) {
+        saveHistory([entry, ...loadHistory()].slice(0, 10));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const list = loadHistory();
+        statHistory.textContent = list.length;
+        btnClear.hidden = list.length === 0;
+        historyList.replaceChildren();
+
+        if (list.length === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'empty';
+            empty.textContent = 'Vos derniers scans apparaîtront ici. Cliquez sur l\'un d\'eux pour le relancer.';
+            historyList.appendChild(empty);
+            return;
+        }
+
+        list.forEach(item => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'history-item';
+
+            const top = document.createElement('span');
+            top.className = 'history-top';
+            const target = document.createElement('span');
+            target.className = 'history-target';
+            target.textContent = String(item.target);
+            const type = document.createElement('span');
+            type.className = 'history-type';
+            type.textContent = String(item.type);
+            top.append(target, type);
+
+            const bottom = document.createElement('span');
+            bottom.className = 'history-bottom';
+            const ports = document.createElement('span');
+            ports.textContent = `${Number(item.ports) || 0} ports`;
+            const vulns = document.createElement('span');
+            vulns.textContent = `${Number(item.vulns) || 0} vuln.`;
+            if (Number(item.vulns) > 0) vulns.className = 'alert';
+            const secs = document.createElement('span');
+            secs.textContent = `${item.secs} s`;
+            const time = document.createElement('span');
+            time.textContent = new Date(item.ts).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+            bottom.append(ports, vulns, secs, time);
+
+            btn.append(top, bottom);
+            btn.addEventListener('click', () => {
+                targetInput.value = item.target;
+                const radio = form.querySelector(`input[name="scan-type"][value="${item.type}"]`);
+                if (radio) radio.checked = true;
+                targetInput.focus();
+            });
+
+            historyList.appendChild(btn);
+        });
+    }
+
+    btnClear.addEventListener('click', () => {
+        saveHistory([]);
+        renderHistory();
+    });
+
+    /* ---------- Raccourcis ---------- */
+
+    document.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+            targetInput.value = chip.dataset.target;
+            targetInput.focus();
+        });
+    });
+
+    /* ---------- Lancement du scan ---------- */
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const target = targetInput.value.trim();
+        const scanType = form.querySelector('input[name="scan-type"]:checked').value;
+        const startedAt = performance.now();
+
+        // Réinitialisation de l'interface utilisateur
+        errorBanner.hidden = true;
+        clearBlips();
+        summaryDiv.innerHTML = '';
+        rawOutputElem.textContent = '';
+        btnCopy.disabled = true;
+        btnScan.disabled = true;
+        btnScan.textContent = 'Scan en cours...';
+        statPorts.textContent = '-';
+        statVulns.textContent = '-';
+        statTime.textContent = '-';
+        statPorts.className = statVulns.className = 'stat-value';
+        resultMeta.textContent = `${target} (${scanType})`;
+        setState('scanning', `[+] Execution du scan sur ${target} (${scanType})... Veuillez patienter.`);
+        startTimer();
+
+        let ok = false;
+
+        try {
+            const response = await fetch('/api/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ target: target, scan_type: scanType })
+            });
+
+            const data = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(data.error || data.rawText || 'Erreur serveur inconnue');
             }
+
+            // Extraction sécurisée du texte brut (rawText ou fallback output)
+            const rawContent = data.rawText || data.output || '[-] Aucun texte retourné par le serveur.';
+            lastRaw = rawContent;
+
+            // 1. Affichage dans la balise <pre> (coloré ligne par ligne, via textContent)
+            renderRaw(rawContent);
+            btnCopy.disabled = false;
+
+            // 2. Traitement des badges visuels
+            const result = parseResults(rawContent, scanType);
+
+            // 3. Radar, compteurs et historique
+            const secs = ((performance.now() - startedAt) / 1000).toFixed(1);
+            addBlips(result.portList);
+            statPorts.textContent = result.ports;
+            statPorts.classList.toggle('is-ok', result.ports > 0);
+            statVulns.textContent = result.vulns;
+            statVulns.classList.toggle('is-alert', result.vulns > 0);
+            statTime.textContent = secs + ' s';
+            addHistory({ target, type: scanType, ports: result.ports, vulns: result.vulns, secs, ts: Date.now() });
+
+            setState('done', `Scan terminé : ${result.ports} port(s) ouvert(s)`, target);
+            statsStrip.scrollIntoView({ behavior: prefersReducedMotion ? 'auto' : 'smooth', block: 'nearest' });
+            ok = true;
+
+        } catch (err) {
+            showError(err.message);
+            resultMeta.textContent = 'Scan en échec';
+            showIdleSummary();
+            showIdleTerminal();
+            statPorts.textContent = statVulns.textContent = statTime.textContent = '-';
+        } finally {
+            // Réactivation des contrôles
+            stopTimer();
+            if (!ok) setState('idle', 'En attente d\'une cible');
+            btnScan.disabled = false;
+            btnScan.textContent = 'Lancer le scan';
+        }
+    });
+
+    // Colorie la sortie brute sans jamais injecter de HTML
+    function renderRaw(text) {
+        const lines = text.split('\n');
+        const frag = document.createDocumentFragment();
+
+        lines.forEach((line, i) => {
+            const span = document.createElement('span');
+            span.textContent = line + (i < lines.length - 1 ? '\n' : '');
+
+            if (/^\d+\/[a-zA-Z0-9-]+\s+open\b/.test(line)) span.className = 'l-open';
+            else if (/VULNERABLE|CVE-/.test(line)) span.className = 'l-vuln';
+            else if (/^\d+\/[a-zA-Z0-9-]+\s+(closed|filtered)\b/.test(line)) span.className = 'l-dim';
+            else if (/^(Starting Nmap|Nmap scan report|Nmap done|Host is up)/.test(line)) span.className = 'l-info';
+
+            frag.appendChild(span);
         });
 
-        function parseResults(rawText, scanType) {
-            const summaryDiv = document.getElementById('summary');
-            let hasFindings = false;
+        rawOutputElem.replaceChildren(frag);
+    }
 
-            // 1. Parsing des Ports Ouverts
-            // Cherche les lignes du type "80/tcp open http"
-            const portRegex = /^(\d+\/[a-zA-Z]+)\s+open\s+(.*)$/gm;
-            let match;
-            while ((match = portRegex.exec(rawText)) !== null) {
-                const badge = document.createElement('div');
-                badge.className = 'badge';
-                badge.textContent = `Port Ouvert: ${match[1]} (${match[2].trim()})`;
-                summaryDiv.appendChild(badge);
-                hasFindings = true;
-            }
+    function parseResults(rawText, scanType) {
+        const portList = [];
+        let vulnCount = 0;
 
-            // 2. Parsing des Vulnérabilités (si scan vuln)
-            if (scanType === 'vuln') {
-                // Cherche les marqueurs de vulnérabilités Nmap
-                const vulnLines = rawText.split('\n').filter(line => 
-                    line.includes('VULNERABLE') || line.includes('CVE-') || line.includes('State: VULNERABLE')
-                );
-                
-                vulnLines.forEach(vuln => {
-                    const badge = document.createElement('div');
-                    badge.className = 'badge vuln';
-                    badge.textContent = `🚨 VULN: ${vuln.replace('|', '').trim()}`;
-                    summaryDiv.appendChild(badge);
-                    hasFindings = true;
-                });
-            }
-
-            if (!hasFindings) {
-                summaryDiv.innerHTML = '<span style="color: gray;">Aucun port ouvert ou vulnérabilité critique détecté.</span>';
-            }
+        if (!rawText) {
+            showIdleSummary();
+            return { ports: 0, vulns: 0, portList };
         }
-    </script>
+
+        // 1. Extraction des Ports Ouverts (Regex adaptée au format Nmap)
+        const portRegex = /^(\d+\/[a-zA-Z0-9-]+)\s+open\s+(.*)$/gm;
+        let match;
+        while ((match = portRegex.exec(rawText)) !== null) {
+            const [portNum, proto] = match[1].split('/');
+
+            const badge = document.createElement('div');
+            badge.className = 'badge';
+
+            const port = document.createElement('span');
+            port.className = 'port';
+            port.textContent = portNum;
+
+            const protoElem = document.createElement('span');
+            protoElem.className = 'proto';
+            protoElem.textContent = proto;
+
+            const svc = document.createElement('span');
+            svc.className = 'svc';
+            svc.textContent = match[2].trim();
+
+            badge.append(port, protoElem, svc);
+            summaryDiv.appendChild(badge);
+            portList.push({ port: portNum, proto });
+        }
+
+        // 2. Extraction des Vulnérabilités (pour les scans "vuln")
+        if (scanType === 'vuln') {
+            const vulnLines = rawText.split('\n').filter(line =>
+                line.includes('VULNERABLE') || line.includes('CVE-') || line.includes('State: VULNERABLE')
+            );
+
+            vulnLines.forEach(vuln => {
+                const badge = document.createElement('div');
+                badge.className = 'badge vuln';
+
+                const tag = document.createElement('span');
+                tag.className = 'tag';
+                tag.textContent = 'VULN';
+
+                const msg = document.createElement('span');
+                msg.className = 'msg';
+                msg.textContent = vuln.replace(/^[|_\s]+/, '').trim();
+
+                badge.append(tag, msg);
+                summaryDiv.appendChild(badge);
+                vulnCount++;
+            });
+        }
+
+        // Message par défaut si aucune entrée n'est identifiée
+        if (portList.length === 0 && vulnCount === 0) {
+            const empty = document.createElement('span');
+            empty.className = 'empty';
+            empty.textContent = 'Aucun port ouvert ou vulnérabilité spécifique détecté dans le résumé.';
+            summaryDiv.appendChild(empty);
+        }
+
+        return { ports: portList.length, vulns: vulnCount, portList };
+    }
+
+    // Copie de la sortie brute
+    btnCopy.addEventListener('click', async () => {
+        try {
+            await navigator.clipboard.writeText(lastRaw);
+            btnCopy.textContent = 'Copié';
+        } catch {
+            btnCopy.textContent = 'Copie impossible';
+        }
+        setTimeout(() => { btnCopy.textContent = 'Copier'; }, 1600);
+    });
+
+    /* ---------- État initial ---------- */
+    showIdleSummary();
+    showIdleTerminal();
+    renderHistory();
+</script>
+
 </body>
 </html>

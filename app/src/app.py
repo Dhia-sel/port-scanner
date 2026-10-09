@@ -4,7 +4,6 @@ import subprocess
 from flask import Flask, jsonify, render_template, request, send_from_directory
 
 app = Flask(__name__)
-# Détection du dossier de sauvegarde (identique à la logique de scan.sh)
 BACKUP_DIR = "../../backups" 
 
 
@@ -33,8 +32,9 @@ def run_scan():
 
     if not is_valid_target(target):
         return jsonify({
-            "error": "Cible invalide. Fournissez une adresse IP ou un nom de domaine valide."
-        }), 400
+            "error": "Cible invalide. Fournissez une adresse IP ou un nom de domaine valide.",
+            "rawText" : "La cible spécifiée n'est pas valide"
+    }), 400
 
     if scan_type not in ['fast', 'full', 'vuln']:
         scan_type = 'fast'
@@ -47,20 +47,37 @@ def run_scan():
             capture_output=True,
             text=True,
             timeout=600)
-
-        return jsonify({
+        output_text = result.stdout if result.stdout else result.stderr
+        if not output_text or not output_text.strip():
+            output_text = " Aucun résultat retourné par le scan."
+    if result.returncode != 0:
+            return jsonify({
+                "success": False,
+                "target": target,
+                "type": scan_type,
+                "rawText": output_text,
+                "output": output_text,
+                "error": f"Le script s'est arrêté avec le code d'erreur {result.returncode}."
+            }), 400
+    return jsonify({
             "success": True,
             "target": target,
             "type": scan_type,
-            "output": result.stdout,
+        "rawText": output_text,
+            "output": output_text,
             "error": result.stderr if result.returncode != 0 else None
         }), 200
 
     except subprocess.TimeoutExpired:
-        return jsonify({"error": "Le scan a dépassé le temps limite (10 min)."}), 504
+        return jsonify({
+        "rawText": "Le scan a dépassé le temps limite (10 min).",
+        "error": "Timeout"  
+    }), 504
     except Exception as e:
-        return jsonify({"error": f"Erreur système : {str(e)}"}), 500
-
+        return jsonify({
+        "error": f"Erreur système : {str(e)}",
+        "rawText": "une erreur interne c'est produite lors de l'exécution"
+    }), 500
 
 @app.route('/api/reports', methods=['GET'])
 def list_reports():
@@ -75,7 +92,7 @@ def list_reports():
 def get_report(filename):
     safe_filename = os.path.basename(filename)
     filepath = os.path.join(BACKUP_DIR, safe_filename)
-        if not os.path.exists(filepath):
+    if not os.path.exists(filepath):
         return jsonify({"error": "Rapport non trouvé."}), 404
 
     try:
