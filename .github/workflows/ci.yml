@@ -1,4 +1,4 @@
-name: CI Nexus Scanner
+name: PScanner
 
 on:
   push:
