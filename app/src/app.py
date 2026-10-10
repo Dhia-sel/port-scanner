@@ -9,7 +9,6 @@ BACKUP_DIR = "../../backups"
 def is_valid_target(target):
     if not target or len(target) > 253:
         return False
-    # Regex complète et réparée pour valider une IP ou un nom de domaine
     pattern = r'^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$|^([a-zA-Z0-9]([a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$'
     return bool(re.match(pattern, target))
 
@@ -27,7 +26,6 @@ def run_scan():
     target = data.get('target', '').strip()
     scan_type = data.get('type', 'fast').strip()
 
-    # 1. Validation de la cible
     if not is_valid_target(target):
         return jsonify({
             "success": False,
@@ -35,26 +33,22 @@ def run_scan():
             "rawText": "La cible spécifiée n'est pas valide."
         }), 400
 
-    # 2. Validation du type de scan
     if scan_type not in ['fast', 'full', 'vuln']:
         scan_type = 'fast'
 
     script_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'scan.sh'))
 
-    # 3. Exécution du script
     try:
         result = subprocess.run(
-            ['/bin/bash', script_path, target, scan_type],
+            ['/bin/bash' , '--noprofile','o','pipefail', script_path, target, scan_type],
             capture_output=True,
             text=True,
             timeout=600
         )
-        
         output_text = result.stdout if result.stdout else result.stderr
         if not output_text or not output_text.strip():
             output_text = "Aucun résultat retourné par le scan."
 
-        # CAS D'ERREUR (exit status 1)
         if result.returncode != 0:
             return jsonify({
                 "success": False,
@@ -65,7 +59,6 @@ def run_scan():
                 "error": f"Le script s'est arrêté avec le code d'erreur {result.returncode}."
             }), 400
 
-        # CAS DE SUCCÈS (exit status 0)
         return jsonify({
             "success": True,
             "target": target,
