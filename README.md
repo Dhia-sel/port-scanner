@@ -1,4 +1,4 @@
-# Nexus Scanner — Port Scanner conteneurisé
+# PScanner — Port Scanner conteneurisé
 
 Application web de **scan de ports et de vulnérabilités** basée sur **Nmap**. Un serveur **Nginx** sert de point d'entrée, une **API Flask** sécurisée contre les attaques basiques exécute les scans, et une page web permet de choisir le type de scan : **Fast**, **Deep** ou **Vuln**. Chaque scan est enregistré automatiquement. Tout le programme se lance avec **un seul script** (`deploy.sh`) via Docker Compose, et des scripts indépendants gèrent la sauvegarde, l'archivage et la supervision.
 
@@ -93,7 +93,6 @@ Application web de **scan de ports et de vulnérabilités** basée sur **Nmap**.
 ├── archives/                   # Rapports de plus de 30 jours (compressés)
 ├── logs/                       # Logs de supervision
 ├── docker-compose.yml
-├── .env
 ├── .dockerignore
 ├── .gitignore
 └── README.md
@@ -247,5 +246,5 @@ Recommandations d'usage :
 
 ## Auteur
 
-**Dhia** — étudiant en Réseaux et Télécommunications à l'INSAT, orienté Cloud Security et pentest.
+**Dhia** — étudiant .
 GitHub : [Dhia-sel](https://github.com/Dhia-sel)
